@@ -88,4 +88,7 @@ public class Response {
 	public void setDate(Date createdAt) {
 		this.date  = createdAt;
 	}
+	public Date getDate() {
+		return this.date;
+	}
 }

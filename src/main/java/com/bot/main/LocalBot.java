@@ -220,9 +220,10 @@ public class LocalBot {
 				londonTime = londonTime.plusHours(8);
 			}
 
-			for(int i=0; i<comments.size(); i++){
+			for(Response comment : comments){
+				Date twtDate = comment.getDate();
 				
-				tweetTime = fmt.parseDateTime(comments.get(i).getDateStr());
+				tweetTime = fmt.parseDateTime(comment.getDateStr());
 				if (this.botType.equals(LOVE_NAME)) {
 					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_LOVE); //set this based on the time between checks
 				}else if (this.botType.equals(POE_NAME)) {
@@ -230,7 +231,7 @@ public class LocalBot {
 				}
 				if(tweetTime.isAfter(londonTime)){
 					System.out.println("Tweet is within the last search");
-					twitClient.publishResponse(comments.get(i).getResponse());
+					twitClient.publishResponse(comment.getResponse());
 				}
 				System.out.println("Current: " + londonTime.toString());
 				System.out.println("Tweet: " + tweetTime.toString());
