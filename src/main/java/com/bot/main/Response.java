@@ -46,7 +46,6 @@ public class Response {
 		String startWord;
 		Random generator = new Random(System.currentTimeMillis());
 		String[] words = inQuestion.split(" ");
-		StringTokenizer st = new StringTokenizer(inQuestion);
 		int rand = generator.nextInt(words.length);
 		startWord = words[rand];
 		if(startWord.contains("@")){

@@ -3,6 +3,7 @@ package com.bot.twitter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
 import java.util.LinkedList;
 import java.util.Properties;
@@ -15,6 +16,7 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
+import com.bot.main.LocalBot.BotNames;
 import com.bot.main.Response;
 
 
@@ -25,12 +27,12 @@ public class TwitterClient {
 	private static String ACCESS_TOKEN;
 	private static String ACCESS_SECRET;
 	
-	public TwitterClient(){
-		readProperties();
+	public TwitterClient(BotNames bt){
+		readProperties(bt);
 		this.twitInst = getTwitterInstance();
 	}
 	
-	private void readProperties() {
+	private void readProperties(BotNames bt) {
 		Properties props = new Properties();
         FileInputStream fis;
 		try {
@@ -43,11 +45,10 @@ public class TwitterClient {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 		CONSUMER_KEY = props.getProperty("oauth.consumer.key");
 		CONSUMER_SECRET = props.getProperty("oauth.consumer.secret");
-		ACCESS_TOKEN = props.getProperty("lovecraft.token");
-		ACCESS_SECRET = props.getProperty("lovecraft.secret");
+		ACCESS_TOKEN = props.getProperty(bt.token);
+		ACCESS_SECRET = props.getProperty(bt.secret);
 
 	}
 	
@@ -62,8 +63,8 @@ public class TwitterClient {
 		return tf.getInstance();
 		
 	}
-	public LinkedList<Response> parseMentions(){
-		LinkedList<Response> comments = new LinkedList<Response>();
+	public ArrayList<Response> parseMentions(){
+		ArrayList<Response> comments = new ArrayList<Response>();
 		try {
 			ResponseList<Status> mentions = twitInst.getMentionsTimeline();
 			for(Status mention : mentions){
@@ -81,8 +82,8 @@ public class TwitterClient {
 		return comments;
 	}
 	
-	public LinkedList<Response> getFollowers(){
-		LinkedList<Response> followers = new LinkedList<Response>();
+	public ArrayList<Response> getFollowers(){
+		ArrayList<Response> followers = new ArrayList<Response>();
 		try {
 			IDs ids = twitInst.getFollowersIDs("HPbotcraft", -1);
 			for(long id : ids.getIDs()){
@@ -99,7 +100,7 @@ public class TwitterClient {
 		return followers;
 	}
 	
-	public void publishFriendTweet(LinkedList<Response> comments){
+	public void publishFriendTweet(ArrayList<Response> comments){
 		try {
 			for(Response comment : comments){
 				twitInst.updateStatus(comment.getResponse());

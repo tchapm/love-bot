@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import com.bot.main.LocalBot.BotNames;
 import com.bot.twitter.TwitterClient;
 
 
@@ -35,42 +37,97 @@ public class LocalBot {
 	private int numWords=0;
 	
 	private String botType = null;
-	private String path;
+	private BotNames botName;
 
-	public LocalBot(String botName, String path) {
+	public enum BotNames {
+		Lovecraft("HPbotcraft", "lovecraft.token", "lovecraft.secret"),
+		Poe("EdgarAllenBot", "poe.token", "poe.secret");
+
+		private BotNames(String name, String token, String secret){
+			this.name = name;
+			this.token = token;
+			this.secret = secret;
+		}
+		public final String name;
+		public final String token;
+		public final String secret;
+	}
+	
+	public LocalBot(String botName) {
+		this.botName = (botName.equals(BotNames.Lovecraft.name)) ? BotNames.Lovecraft : botName.equals(BotNames.Poe.name) ? BotNames.Poe : null;
 		this.botType = botName;
-		this.path = path;
 	}
 	
 
-	public LinkedList<Response> getFollowers(BufferedReader input) throws IOException, InterruptedException {
-		String str;
-		LinkedList<Response> followers = new LinkedList<Response>();
-		while ((str = input.readLine()) != null) {
-			if ((botType.equals(LOVE_NAME) && !str.equals(POE_NAME))
-					|| (botType.equals(POE_NAME) && !str.equals(LOVE_NAME))){
-				Response theFollower = new Response("@" + str);
-				followers.add(theFollower);
-			}
-		}
-		return followers;
-	}
-	public LinkedList<Response> parseInTweets(BufferedReader in) throws IOException {
-		LinkedList<Response> comments = new LinkedList<Response>();
-		while(in.ready()){
-			Response tweet = new Response();
-			tweet.setSearchString(in.readLine());
-			tweet.setCommentor(in.readLine());
-			tweet.setDateStr(in.readLine());
-			if(tweet.getDateStr()!=null && tweet.getSearchWord()!=null && tweet.getCommentor()!=null){
-				comments.add(tweet);
-			}
-		}
-		return comments;
+
+	public void createAndPublish() throws IOException {
+		ArrayList<Response> comments = parseMentions();
+
+		//String firstWord = new String("can");
+		//String nextWord = null;
+		//int sentenceNum = 10;
+		//int currSentence = 0;
+
+		//pull in the corpus to analize
+		inputCorpus();
+		System.out.println("\nWords filed: " + getNumWords());
+		//System.out.println("The number of I is = " + lovecraft.wordMap.get("I"));
+		setProbablity();
+		makeTweets(comments);
+		publishResponseTweetNew(comments);
+		
 	}
 
+
+	public void getFollowersAndPublish() throws IOException {
+		ArrayList<Response> comments = getFollowers();
+
+		//pull in the corpus to analize
+		inputCorpus();
+		System.out.println("\nWords filed: " + getNumWords());
+		setProbablity();
+		makeTweets(comments);
+		twitClient.publishFriendTweet(comments);
+		
+	}
+	
+	public ArrayList<Response> getFollowers() {
+		return twitClient.getFollowers();
+	}
+	
+//	public LinkedList<Response> getFollowers(BufferedReader input) throws IOException, InterruptedException {
+//		String str;
+//		LinkedList<Response> followers = new LinkedList<Response>();
+//		while ((str = input.readLine()) != null) {
+//			if ((botType.equals(LOVE_NAME) && !str.equals(POE_NAME))
+//					|| (botType.equals(POE_NAME) && !str.equals(LOVE_NAME))){
+//				Response theFollower = new Response("@" + str);
+//				followers.add(theFollower);
+//			}
+//		}
+//		return followers;
+//	}
+	
+	public ArrayList<Response> parseMentions() {
+		return twitClient.parseMentions();
+	}
+	
+//	public LinkedList<Response> parseInTweets(BufferedReader in) throws IOException {
+//		LinkedList<Response> comments = new LinkedList<Response>();
+//		while(in.ready()){
+//			Response tweet = new Response();
+//			tweet.setSearchString(in.readLine());
+//			tweet.setCommentor(in.readLine());
+//			tweet.setDateStr(in.readLine());
+//			if(tweet.getDateStr()!=null && tweet.getSearchWord()!=null && tweet.getCommentor()!=null){
+//				comments.add(tweet);
+//			}
+//		}
+//		return comments;
+//	}
+
 	public void inputCorpus() throws IOException {
-			File dir = new File(this.path + "/" + this.botType + "Text");
+			File dir = new File("resources/" + botName.name + "Text");
 			if (dir.isDirectory()){
 				for (File f : dir.listFiles()){
 					if(!f.isHidden()){
@@ -116,7 +173,8 @@ public class LocalBot {
 			}
 		}
 	}
-	public void makeTweets(LinkedList<Response> comments) {
+	
+	public void makeTweets(ArrayList<Response> comments) {
 		String tweet = "";
 
 		for(int i=0; i<comments.size(); i++){
@@ -168,46 +226,46 @@ public class LocalBot {
 	}
 	
 
-	public void publishResponseTweet(LinkedList<Response> comments) {
-		try{
-			DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//ISODateTimeFormat.dateTime();
-			DateTime londonTime = new DateTime();
-			//timestamp of tweets
-			londonTime = londonTime.withZone(DateTimeZone.forID("America/Los_Angeles"));
-			DateTime tweetTime;
-			if(TimeZone.getDefault().inDaylightTime(new Date())){
-				londonTime = londonTime.plusHours(7);
-			}else{
-				londonTime = londonTime.plusHours(8);
-			}
+//	public void publishResponseTweet(LinkedList<Response> comments) {
+//		try{
+//			DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//ISODateTimeFormat.dateTime();
+//			DateTime londonTime = new DateTime();
+//			//timestamp of tweets
+//			londonTime = londonTime.withZone(DateTimeZone.forID("America/Los_Angeles"));
+//			DateTime tweetTime;
+//			if(TimeZone.getDefault().inDaylightTime(new Date())){
+//				londonTime = londonTime.plusHours(7);
+//			}else{
+//				londonTime = londonTime.plusHours(8);
+//			}
+//
+//			FileWriter fstream = null;
+//			String outTweets =  this.path + "tweets/outTweets" + this.botType + ".txt";
+//			fstream = new FileWriter(outTweets); 
+//
+//			BufferedWriter out = new BufferedWriter(fstream);
+//			for(int i=0; i<comments.size(); i++){	
+//				tweetTime = fmt.parseDateTime(comments.get(i).getDateStr());
+//				if (this.botType.equals(LOVE_NAME)) {
+//					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_LOVE); //set this based on the time between checks
+//				}else if (this.botType.equals(POE_NAME)) {
+//					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_POE); 
+//				}
+//				if(tweetTime.isAfter(londonTime)){
+//					System.out.println("Tweet is within the last search");
+//					out.write(comments.get(i).getResponse() + "\n");
+//				}
+//				System.out.println("Current: " + londonTime.toString());
+//				System.out.println("Tweet: " + tweetTime.toString());
+//			}
+//			out.close();
+//		}catch (Exception e){//Catch exception if any
+//			System.err.println("Error: " + e.getMessage());
+//		}
+//		
+//	}
 
-			FileWriter fstream = null;
-			String outTweets =  this.path + "tweets/outTweets" + this.botType + ".txt";
-			fstream = new FileWriter(outTweets); 
-
-			BufferedWriter out = new BufferedWriter(fstream);
-			for(int i=0; i<comments.size(); i++){	
-				tweetTime = fmt.parseDateTime(comments.get(i).getDateStr());
-				if (this.botType.equals(LOVE_NAME)) {
-					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_LOVE); //set this based on the time between checks
-				}else if (this.botType.equals(POE_NAME)) {
-					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_POE); 
-				}
-				if(tweetTime.isAfter(londonTime)){
-					System.out.println("Tweet is within the last search");
-					out.write(comments.get(i).getResponse() + "\n");
-				}
-				System.out.println("Current: " + londonTime.toString());
-				System.out.println("Tweet: " + tweetTime.toString());
-			}
-			out.close();
-		}catch (Exception e){//Catch exception if any
-			System.err.println("Error: " + e.getMessage());
-		}
-		
-	}
-
-	public void publishResponseTweetNew(LinkedList<Response> comments) {
+	public void publishResponseTweetNew(ArrayList<Response> comments) {
 		try{
 			DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//ISODateTimeFormat.dateTime();
 			DateTime londonTime = new DateTime();
@@ -243,19 +301,16 @@ public class LocalBot {
 	}
 
 	
-	public void publishFriendTweet(LinkedList<Response> comments) throws IOException {
-		FileWriter fstream = null;
-		String outTweets =  this.path + "tweets/outFollow" + this.botType + ".txt";
-		fstream = new FileWriter(outTweets); 	
-		BufferedWriter out = new BufferedWriter(fstream);
-		for(int i=0; i<comments.size(); i++){	
-			out.write(comments.get(i).getResponse() + "\n");
-		}
-		out.close();
-	}
-
-	
-
+//	public void publishFriendTweet(LinkedList<Response> comments) throws IOException {
+//		FileWriter fstream = null;
+//		String outTweets =  this.path + "tweets/outFollow" + this.botType + ".txt";
+//		fstream = new FileWriter(outTweets); 	
+//		BufferedWriter out = new BufferedWriter(fstream);
+//		for(int i=0; i<comments.size(); i++){	
+//			out.write(comments.get(i).getResponse() + "\n");
+//		}
+//		out.close();
+//	}
 
 	private String getNext(String firstWord) {
 		String keyLower = null;
@@ -372,6 +427,10 @@ public class LocalBot {
 	public void setBotType(String botType) {
 		this.botType = botType;
 	}
+
+
+
+
 
 
 
