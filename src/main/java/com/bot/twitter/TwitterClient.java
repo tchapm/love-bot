@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
-import java.util.LinkedList;
 import java.util.Properties;
 
 import twitter4j.IDs;
@@ -16,7 +15,7 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
-import com.bot.main.LocalBot.BotNames;
+import com.bot.main.LocalBot.BotTraits;
 import com.bot.main.Response;
 
 
@@ -27,12 +26,14 @@ public class TwitterClient {
 	private static String ACCESS_TOKEN;
 	private static String ACCESS_SECRET;
 	
-	public TwitterClient(BotNames bt){
+	public TwitterClient(BotTraits bt){
 		readProperties(bt);
 		this.twitInst = getTwitterInstance();
 	}
 	
-	private void readProperties(BotNames bt) {
+
+
+	private void readProperties(BotTraits bt) {
 		Properties props = new Properties();
         FileInputStream fis;
 		try {
@@ -111,11 +112,19 @@ public class TwitterClient {
 		
 	}
 
-	public void publishResponse(String response) {
+	public Status publishResponse(String response) {
 		try {
-			twitInst.updateStatus(response);
+			return twitInst.updateStatus(response);
 		} catch (TwitterException e) {
 			e.printStackTrace();
 		}
+		return null;
+	}
+	public Twitter getTwitInst() {
+		return twitInst;
+	}
+
+	public void setTwitInst(Twitter twitInst) {
+		this.twitInst = twitInst;
 	}
 }

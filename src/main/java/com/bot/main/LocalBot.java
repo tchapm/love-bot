@@ -6,8 +6,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,41 +23,41 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import com.bot.main.LocalBot.BotNames;
+import twitter4j.Status;
+
+import com.bot.main.LocalBot.BotTraits;
 import com.bot.twitter.TwitterClient;
 
 
 public class LocalBot {
 	private static final int TIME_BETWEEN_CHECKS_LOVE = 4;
 	private static final int TIME_BETWEEN_CHECKS_POE = 5;
-	private static final String POE_NAME = "EdgarAllanBot";
-	private static final String LOVE_NAME = "HPbotcraft";
 	private TwitterClient twitClient;
-
 	public HashMap<String, HashMap<String, Integer>> wordMap = new HashMap<String, HashMap<String, Integer>>();
 	public HashMap<String, HashMap<String, Float>> wordProbablityMap = new HashMap<String, HashMap<String, Float>>();
 	private int numWords=0;
 	
-	private String botType = null;
-	private BotNames botName;
+	private BotTraits botType;
 
-	public enum BotNames {
-		Lovecraft("HPbotcraft", "lovecraft.token", "lovecraft.secret"),
-		Poe("EdgarAllenBot", "poe.token", "poe.secret");
+	public enum BotTraits {
+		Lovecraft("HPbotcraft", "lovecraft.token", "lovecraft.secret", 4),
+		Poe("EdgarAllenBot", "poe.token", "poe.secret", 5);
 
-		private BotNames(String name, String token, String secret){
+		private BotTraits(String name, String token, String secret, int checkTime){
 			this.name = name;
 			this.token = token;
 			this.secret = secret;
+			this.checkTime = checkTime;
 		}
 		public final String name;
 		public final String token;
 		public final String secret;
+		public final int checkTime;
 	}
 	
 	public LocalBot(String botName) {
-		this.botName = (botName.equals(BotNames.Lovecraft.name)) ? BotNames.Lovecraft : botName.equals(BotNames.Poe.name) ? BotNames.Poe : null;
-		this.botType = botName;
+		this.botType = (botName.equals(BotTraits.Lovecraft.name)) ? BotTraits.Lovecraft : botName.equals(BotTraits.Poe.name) ? BotTraits.Poe : null;
+		this.twitClient = new TwitterClient(botType);
 	}
 	
 
@@ -127,7 +129,7 @@ public class LocalBot {
 //	}
 
 	public void inputCorpus() throws IOException {
-			File dir = new File("resources/" + botName.name + "Text");
+			File dir = new File("resources/" + botType.name + "Text");
 			if (dir.isDirectory()){
 				for (File f : dir.listFiles()){
 					if(!f.isHidden()){
@@ -265,41 +267,33 @@ public class LocalBot {
 //		
 //	}
 
-	public void publishResponseTweetNew(ArrayList<Response> comments) {
+	public long publishResponseTweetNew(ArrayList<Response> comments) {
+		long tweetId = 0;
 		try{
-			DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//ISODateTimeFormat.dateTime();
-			DateTime londonTime = new DateTime();
-			//timestamp of tweets
-			londonTime = londonTime.withZone(DateTimeZone.forID("America/Los_Angeles"));
-			DateTime tweetTime;
-			if(TimeZone.getDefault().inDaylightTime(new Date())){
-				londonTime = londonTime.plusHours(7);
-			}else{
-				londonTime = londonTime.plusHours(8);
-			}
-
+			Date cutoffTime = getCutoffTime();
 			for(Response comment : comments){
 				Date twtDate = comment.getDate();
-				
-				tweetTime = fmt.parseDateTime(comment.getDateStr());
-				if (this.botType.equals(LOVE_NAME)) {
-					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_LOVE); //set this based on the time between checks
-				}else if (this.botType.equals(POE_NAME)) {
-					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_POE); 
-				}
-				if(tweetTime.isAfter(londonTime)){
+				if(twtDate.after(cutoffTime)){
 					System.out.println("Tweet is within the last search");
-					twitClient.publishResponse(comment.getResponse());
+					Status st = twitClient.publishResponse(comment.getResponse());
+					tweetId = st.getId();
 				}
-				System.out.println("Current: " + londonTime.toString());
-				System.out.println("Tweet: " + tweetTime.toString());
+				System.out.println("Current: " + cutoffTime.toString());
+				System.out.println("Tweet: " + twtDate.toString());
 			}
-		}catch (Exception e){//Catch exception if any
+		}catch (Exception e){
 			System.err.println("Error: " + e.getMessage());
 		}
+		return tweetId;
 		
 	}
 
+	private Date getCutoffTime() {
+		Calendar cd = new GregorianCalendar();
+		cd.setTime(new Date());
+		cd.add(Calendar.MINUTE,	-botType.checkTime);
+		return new Date(cd.getTimeInMillis());
+	}
 	
 //	public void publishFriendTweet(LinkedList<Response> comments) throws IOException {
 //		FileWriter fstream = null;
@@ -311,6 +305,7 @@ public class LocalBot {
 //		}
 //		out.close();
 //	}
+
 
 	private String getNext(String firstWord) {
 		String keyLower = null;
@@ -420,18 +415,12 @@ public class LocalBot {
 		this.numWords = numWords;
 	}
 
-	public String getBotType() {
-		return botType;
+	public TwitterClient getTwitClient() {
+		return twitClient;
 	}
 
-	public void setBotType(String botType) {
-		this.botType = botType;
+	public void setTwitClient(TwitterClient twitClient) {
+		this.twitClient = twitClient;
 	}
-
-
-
-
-
-
 
 }
