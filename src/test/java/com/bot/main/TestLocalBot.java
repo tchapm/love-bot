@@ -1,15 +1,19 @@
 package com.bot.main;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import junit.framework.Assert;
+
+import org.junit.Ignore;
 import org.junit.Test;
 import twitter4j.TwitterException;
 
 public class TestLocalBot {
 
-	@Test
+	@Ignore
 	public void testPublishResponseDate() throws InterruptedException{
 		Response testRes = new Response("Test");
 		testRes.setDate(new Date());
@@ -27,5 +31,16 @@ public class TestLocalBot {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	@Test
+	public void testInputCorpus() throws IOException{
+		LocalBot lb = new LocalBot("HPbotcraft");
+		lb.inputCorpus();
+		HashMap<String, Integer> testMap = lb.wordMap.get("death");
+		Assert.assertEquals(1,(int)testMap.get("struggle"));
+		lb.setProbability();
+		Assert.assertEquals(true, lb.getTweet("Steve", "struggle!").length()>0);
+		lb.getNext("test");
 	}
 }

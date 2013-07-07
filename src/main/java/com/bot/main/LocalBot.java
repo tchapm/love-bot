@@ -32,6 +32,7 @@ import com.bot.twitter.TwitterClient;
 public class LocalBot {
 	private static final int TIME_BETWEEN_CHECKS_LOVE = 4;
 	private static final int TIME_BETWEEN_CHECKS_POE = 5;
+	private static final String GENERIC_START_WORD = "When";
 	private TwitterClient twitClient;
 	public HashMap<String, HashMap<String, Integer>> wordMap = new HashMap<String, HashMap<String, Integer>>();
 	public HashMap<String, HashMap<String, Float>> wordProbablityMap = new HashMap<String, HashMap<String, Float>>();
@@ -40,8 +41,8 @@ public class LocalBot {
 	private BotTraits botType;
 
 	public enum BotTraits {
-		Lovecraft("HPbotcraft", "lovecraft.token", "lovecraft.secret", 4),
-		Poe("EdgarAllenBot", "poe.token", "poe.secret", 5);
+		BOT1("HPbotcraft", "lovecraft.token", "lovecraft.secret", 4),
+		BOT2("EdgarAllenBot", "poe.token", "poe.secret", 5);
 
 		private BotTraits(String name, String token, String secret, int checkTime){
 			this.name = name;
@@ -56,7 +57,7 @@ public class LocalBot {
 	}
 	
 	public LocalBot(String botName) {
-		this.botType = (botName.equals(BotTraits.Lovecraft.name)) ? BotTraits.Lovecraft : botName.equals(BotTraits.Poe.name) ? BotTraits.Poe : null;
+		this.botType = (botName.equals(BotTraits.BOT1.name)) ? BotTraits.BOT1 : botName.equals(BotTraits.BOT2.name) ? BotTraits.BOT2 : null;
 		this.twitClient = new TwitterClient(botType);
 	}
 	
@@ -74,7 +75,7 @@ public class LocalBot {
 		inputCorpus();
 		System.out.println("\nWords filed: " + getNumWords());
 		//System.out.println("The number of I is = " + lovecraft.wordMap.get("I"));
-		setProbablity();
+		setProbability();
 		makeTweets(comments);
 		publishResponseTweetNew(comments);
 		
@@ -87,9 +88,9 @@ public class LocalBot {
 		//pull in the corpus to analize
 		inputCorpus();
 		System.out.println("\nWords filed: " + getNumWords());
-		setProbablity();
+		setProbability();
 		makeTweets(comments);
-		twitClient.publishFriendTweet(comments);
+//		twitClient.publishFriendTweet(comments);
 		
 	}
 	
@@ -129,16 +130,17 @@ public class LocalBot {
 //	}
 
 	public void inputCorpus() throws IOException {
-			File dir = new File("resources/" + botType.name + "Text");
-			if (dir.isDirectory()){
-				for (File f : dir.listFiles()){
-					if(!f.isHidden()){
-						BufferedReader inCorpus= new BufferedReader(new FileReader(f));
-						this.fillMap(inCorpus);
-						inCorpus.close();
-					}
+		String dirName = "src/main/resources/" + botType.name + "_text";
+		File dir = new File(dirName);
+		if (dir.isDirectory()){
+			for (File f : dir.listFiles()){
+				if(!f.isHidden()){
+					BufferedReader inCorpus = new BufferedReader(new FileReader(f));
+					this.fillMap(inCorpus);
+					inCorpus.close();
 				}
 			}
+		}
 	}
 	
 	public void fillMap(BufferedReader in) throws IOException{
@@ -177,54 +179,53 @@ public class LocalBot {
 	}
 	
 	public void makeTweets(ArrayList<Response> comments) {
-		String tweet = "";
-
 		for(int i=0; i<comments.size(); i++){
+			String tweet = "";
 			String commentator = comments.get(i).getCommentor();
 			String searchWord = comments.get(i).getSearchWord();
 			while(!tweet.endsWith(".") && !tweet.endsWith("?") && !tweet.endsWith("!")){
 				tweet = getTweet(commentator, searchWord);
 			}
 			comments.get(i).setResponse(tweet);
-			System.out.println("\n\n" + comments.get(i).getResponse());
-			tweet = "";
+			System.out.println(i + ".   " + comments.get(i).getResponse());
 		}
 	}
 	
-	public String getTweet(String commWrd, String srchWrd){
-		String tweet = commWrd;
+	public String getTweet(String commentor, String srchWrd){
+		StringBuilder sb = new StringBuilder(commentor);
 		String nextWord = srchWrd;
-		tweet = tweet.concat(" " +  nextWord);
+		sb.append(" " + nextWord);
 		try{
-			if(this.getNext(nextWord)!=null){
+			if(wordProbablityMap.containsKey(nextWord)){
 				nextWord = this.getNext(nextWord);
-			} else if(this.getNext(nextWord.toLowerCase())!=null){
+			} else if(wordProbablityMap.containsKey(nextWord.toLowerCase())){
 				nextWord = this.getNext(nextWord.toLowerCase());
-			} else if(this.getNext(nextWord.substring(0, (nextWord.length()-1)))!=null){
+			} else if(wordProbablityMap.containsKey(stripPunctuation(nextWord))){
 				nextWord = this.getNext(nextWord.substring(0, (nextWord.length()-1)));
 			} else {
 				nextWord = this.getNext(nextWord);
 			}
-			while((tweet.length() + nextWord.length()) < 140){
-				tweet = tweet.concat(" " + nextWord);
-				if((nextWord.contains(".") || nextWord.contains("?") || nextWord.contains("!")) && tweet.length()>70){
+			while((sb.length() + nextWord.length()) < 140){
+				sb.append(" " + nextWord);
+				if(hasPunctuation(nextWord) && sb.length()>70){
 					break;
 				}
 				nextWord = this.getNext(nextWord);
 			}
 			//tweet = tweet.concat("...");
 		}catch (Exception e){
-			tweet = commWrd;
-			nextWord = "When";
-			while((tweet.length() + nextWord.length()) < 140){
-				tweet = tweet.concat(" " + nextWord);
-				if((nextWord.contains(".") || nextWord.contains("?") || nextWord.contains("!")) && tweet.length()>70){
+			sb = new StringBuilder(commentor);
+			nextWord = GENERIC_START_WORD;
+			while((sb.length() + nextWord.length()) < 140){
+				sb.append(" " + nextWord);
+				if((nextWord.contains(".") || nextWord.contains("?") ||
+						nextWord.contains("!")) && sb.length()>70){
 					break;
 				}
 				nextWord = this.getNext(nextWord);
 			}
 		}
-		return tweet;
+		return sb.toString();
 	}
 	
 
@@ -267,6 +268,15 @@ public class LocalBot {
 //		
 //	}
 
+	private Object stripPunctuation(String word) {
+		return hasPunctuation(word) ? word.substring(0, (word.length()-1)) : word;
+	}
+
+	private boolean hasPunctuation(String nextWord) {
+		return (nextWord.endsWith(".") || nextWord.endsWith("?") ||
+		nextWord.endsWith("!"));
+	}
+
 	public long publishResponseTweetNew(ArrayList<Response> comments) {
 		long tweetId = 0;
 		try{
@@ -307,61 +317,75 @@ public class LocalBot {
 //	}
 
 
-	private String getNext(String firstWord) {
-		String keyLower = null;
-		String keyUpper = null;
-		float value;
+//	private String getNext(String firstWord) {
+//		String keyLower = null;
+//		String keyUpper = null;
+//		float value;
+//		Random generator = new Random();
+//		float randomIndex = generator.nextFloat()*100;
+//		if (!this.wordProbablityMap.containsKey(firstWord)){
+//			return null;
+//		}
+//		
+//		ValueComparator bvc =  new ValueComparator(this.wordProbablityMap.get(firstWord));
+//        TreeMap<String,Float> sortedMap = new TreeMap<String,Float>(bvc);
+//        sortedMap.putAll(this.wordProbablityMap.get(firstWord));
+//		Iterator<String> it = sortedMap.keySet().iterator();
+//		keyLower = (String)it.next();
+//		
+//		while (it.hasNext()) {
+//			keyUpper = (String)it.next();
+////			HashMap<String, Float> temp  = this.wordProbablityMap.get(firstWord);
+//			value = sortedMap.get(keyLower);
+////			value = this.wordProbablityMap.get(firstWord).get(keyLower);
+//			if (randomIndex<=value) {
+//				return keyLower;
+//			} else if(randomIndex>value && randomIndex<=this.wordProbablityMap.get(firstWord).get(keyUpper)){
+//				return keyUpper;
+//			}
+//			keyLower = keyUpper;
+//		}
+//		return keyLower;
+//	}
+	
+	public String getNext(String firstWord) {
+		String closestWord = null;
 		Random generator = new Random();
 		float randomIndex = generator.nextFloat()*100;
-		if (!this.wordProbablityMap.containsKey(firstWord)){
+		if (!wordProbablityMap.containsKey(firstWord)){
 			return null;
 		}
-		
-		ValueComparator bvc =  new ValueComparator(this.wordProbablityMap.get(firstWord));
-        TreeMap<String,Float> sortedMap = new TreeMap<String,Float>(bvc);
-        sortedMap.putAll(this.wordProbablityMap.get(firstWord));
-		Iterator<String> it = sortedMap.keySet().iterator();
-		keyLower = (String)it.next();
-		
-		while (it.hasNext()) {
-			keyUpper = (String)it.next();
-//			HashMap<String, Float> temp  = this.wordProbablityMap.get(firstWord);
-			value = sortedMap.get(keyLower);
-//			value = this.wordProbablityMap.get(firstWord).get(keyLower);
-			if (randomIndex<=value) {
-				return keyLower;
-			} else if(randomIndex>value && randomIndex<=this.wordProbablityMap.get(firstWord).get(keyUpper)){
-				return keyUpper;
+		float nearDist = Float.MAX_VALUE;
+		HashMap<String, Float> wordProb = wordProbablityMap.get(firstWord);
+		for(String keyWord : wordProb.keySet()){
+			float wordDist = wordProb.get(keyWord);
+			if(wordDist>randomIndex && (wordDist-randomIndex<nearDist)){
+				nearDist = wordDist-randomIndex;
+				closestWord = keyWord;
 			}
-			keyLower = keyUpper;
 		}
-		return keyLower;
+		return closestWord;
 	}
 	
-	class ValueComparator implements Comparator<String> {
+//	class ValueComparator implements Comparator<String> {
+//	    HashMap<String, Float> base;
+//	    public ValueComparator(HashMap<String, Float> hashMap) {
+//	        this.base = hashMap;
+//	    }
+//
+//	    public int compare(String a, String b) {
+//	        if (base.get(a) > base.get(b)) {
+//	            return 1;
+//	        } else if (base.get(a)==base.get(b)){
+//	        	return 0;
+//	        }else{
+//	            return -1;
+//	        } 
+//	    }
+//	}
 
-	    HashMap<String, Float> base;
-	    public ValueComparator(HashMap<String, Float> hashMap) {
-	        this.base = hashMap;
-	    }
-
-	    // Note: this comparator imposes orderings that are inconsistent with equals.    
-	    public int compare(String a, String b) {
-	    	
-	        if (base.get(a) > base.get(b)) {
-	            return 1;
-	        } else if (base.get(a)==base.get(b)){
-	        	return 0;
-	        }else{
-	            return -1;
-	        } // returning 0 would merge keys
-	    }
-	}
-
-	public void setProbablity(){
-		Iterator<String> it = this.wordMap.keySet().iterator();
-		while (it.hasNext()) {
-			String key = (String)it.next();
+	public void setProbability(){
+		for(String key : wordMap.keySet()){
 			this.setPercentage(key);
 		}
 	}
