@@ -43,6 +43,6 @@ public class TestBot {
 		Assert.assertEquals(true, tweet.length()>0);
 		Assert.assertEquals(true, tweet.startsWith("@Steve which"));
 		tweet = lb.getTweet(cp.wordProbablityMap, "Steve", "sfsdfsdfds");
-		Assert.assertEquals(true, tweet.startsWith("@Steve What"));
+		Assert.assertEquals(false, tweet.startsWith("@Steve sfsdfsdfds"));
 	}
 }

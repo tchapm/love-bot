@@ -1,7 +1,10 @@
 package com.bot.main;
 
 import java.io.IOException;
-
+/**
+ * Main class to publish a tweet at each follower of bot named in args[0]
+ * @author tchap
+ */
 public class MainBotFollowers {
 	
 	public static void main(String[] args) throws IOException, InterruptedException {

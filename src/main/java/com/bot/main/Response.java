@@ -1,10 +1,13 @@
 package com.bot.main;
 import java.util.Date;
 import java.util.Random;
-
 import com.bot.utils.StringUtils;
 
-
+/**
+ * Class for the response tweet from the bot. 
+ * @author tchap
+ *
+ */
 public class Response {
 	private String commentor = null;
 	private String searchWord = null;
@@ -18,15 +21,14 @@ public class Response {
 	}
 	
 	public Response(String text, String screenName, Date createdAt) {
-		this.setSearchString(text);
+		this.searchWord = setSearchString(text);
 		this.commentor = screenName;
 		this.date = createdAt;
 	}
 	
-	private static String genRandomStart(String follower) throws InterruptedException {
+	public static String genRandomStart(String seedWord) {
 		String startWord;
-		Random generator = new Random(System.currentTimeMillis() + follower.length());
-		Thread.sleep(10);
+		Random generator = new Random(System.currentTimeMillis() + seedWord.length());
 		int randomInt = generator.nextInt(9);
 		switch (randomInt) {
 		case 0:  startWord = "Who";
@@ -51,7 +53,7 @@ public class Response {
 		return startWord;
 	}
 	
-	public void setSearchString(String inQuestion) {
+	public String setSearchString(String inQuestion) {
 		String startWord;
 		Random generator = new Random(System.currentTimeMillis());
 		String[] words = inQuestion.split(" ");
@@ -64,8 +66,7 @@ public class Response {
 				startWord=words[rand+1];
 			}
 		}
-		startWord = StringUtils.stripPunctuation(startWord);
-		this.searchWord = startWord;
+		return StringUtils.stripPunctuation(startWord);
 	}
 
 	public String getDateStr() {
@@ -74,7 +75,7 @@ public class Response {
 	public void setDateStr(String date) {
 		this.dateStr = date;
 	}
-	public String getCommentor() {
+	public String getCommenter() {
 		return commentor;
 	}
 	public void setCommentor(String commentor) {

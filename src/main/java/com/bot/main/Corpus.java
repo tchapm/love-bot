@@ -6,10 +6,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
-
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+/**
+ * This class handles the corpus of the specific author. It grabs all of the text from the resources
+ * directory and creates maps of the words to implement the markov chaining. The wordMap maps the words
+ * with the number of occurrences of the words that follow in the text. The wordProbabilityMap maps
+ * the words with the likelihood of occurrence of the following word. 
+ * @author tchap
+ *
+ */
 public class Corpus {
 	HashMap<String, HashMap<String, Integer>> wordMap = new HashMap<String, HashMap<String, Integer>>();
 	HashMap<String, HashMap<String, Float>> wordProbablityMap = new HashMap<String, HashMap<String, Float>>();
@@ -28,7 +35,12 @@ public class Corpus {
 			e.printStackTrace();
 		}
 	}
-
+	/**
+	 * Method to ingest the text and return the wordMap
+	 * @param botName 
+	 * @return wordMap
+	 * @throws IOException
+	 */
 	public HashMap<String, HashMap<String, Integer>> inputCorpus(String botName) throws IOException {
 		String dirName = RESOURCE_DIR_NAME + botName + TEXT_PATH;
 		File dir = new File(dirName);
@@ -44,7 +56,13 @@ public class Corpus {
 		}
 		return theWordMap;
 	}
-	
+	/**
+	 * Method to create the word map
+	 * @param in
+	 * @return word map of the words in the corpus with the number of occurrences of 
+	 * the words that follow
+	 * @throws IOException
+	 */
 	public HashMap<String, HashMap<String, Integer>> fillMap(BufferedReader in) throws IOException{
 		String str = null;
 		String secondWord = null;
@@ -89,7 +107,15 @@ public class Corpus {
 		}
 		return wordProbMap;
 	}
-	
+	/**
+	 * Method to set the likelihood of occurrence of the words that follow firstWord. Returns a map
+	 * where the distance between the float and the float that is the next lowest is the percentage 
+	 * of occurrence. This is somewhat awkward way of representing likelihood, but it allows for easy 
+	 * lookup of the next word in a markov chain.  
+	 * @param firstWord
+	 * @param wrdMap
+	 * @return percentage map of following words for firstWord
+	 */
 	public HashMap<String,Float> setPercentage(String firstWord, HashMap<String, HashMap<String, Integer>> wrdMap){
 		int secondWordCount;
 		int secondWordSum = getSum(firstWord, wrdMap);
@@ -103,7 +129,11 @@ public class Corpus {
 		}
 		return wordPercentMap;
 	}
-	
+	/**
+	 * @param firstWord
+	 * @param wrdMap
+	 * @return the total number of occurrences of firstWord
+	 */
 	public Integer getSum(String firstWord, HashMap<String, HashMap<String, Integer>> wrdMap){
 		Integer sum = 0;
 		HashMap<String, Integer> firstWordMap = wrdMap.get(firstWord);

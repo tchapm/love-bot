@@ -1,17 +1,10 @@
 package com.bot.twitter;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
-
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.xml.DOMConfigurator;
-
 import twitter4j.IDs;
 import twitter4j.ResponseList;
 import twitter4j.Status;
@@ -19,10 +12,13 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
-
 import com.bot.main.Bot.BotTraits;
 import com.bot.main.Response;
-
+/**
+ * Class to connect to the twitter account of the twitter bot. Can get followers, tweets @bot, and 
+ * publish responses. 
+ * @author tchap
+ */
 
 public class TwitterClient {
 	private Twitter twitInst; 
@@ -37,7 +33,10 @@ public class TwitterClient {
 		readProperties(bt);
 		this.twitInst = getTwitterInstance();
 	}
-
+	/**
+	 * Method to read the properties.xml file and get the oath keys needed to connect to the twitter account
+	 * @param bt the enum of the bot name and properties
+	 */
 	private void readProperties(BotTraits bt) {
 		Properties props = new Properties();
 		FileInputStream fis;
@@ -57,7 +56,11 @@ public class TwitterClient {
 			System.exit(0);
 		}
 	}
-
+	/**
+	 * Method to connect to the twitter account. If authorization is correct it will be connected to the bot
+	 * and be able to perform functions of the client 
+	 * @return instance of the TwitterFactory associated with the specified account
+	 */
 	private Twitter getTwitterInstance(){
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled(true)
@@ -69,6 +72,11 @@ public class TwitterClient {
 		return tf.getInstance();
 
 	}
+	/**
+	 * Method to iterate through the mentions of the bot, and get the relevant information so that a response
+	 * can be formed.
+	 * @return an array of Responses populated with necessary attributes from the comments
+	 */
 	public ArrayList<Response> parseMentions(){
 		ArrayList<Response> comments = new ArrayList<Response>();
 		try {
@@ -76,7 +84,7 @@ public class TwitterClient {
 			for(Status mention : mentions){
 				Response tweet = new Response(mention.getText(), mention.getUser().getScreenName(),
 						mention.getCreatedAt());
-				if(tweet.getDate()!=null && tweet.getSearchWord()!=null && tweet.getCommentor()!=null){
+				if(tweet.getDate()!=null && tweet.getSearchWord()!=null && tweet.getCommenter()!=null){
 					comments.add(tweet);
 				}
 			}
@@ -108,7 +116,6 @@ public class TwitterClient {
 		} catch (TwitterException e) {
 			logger.error(e);
 		}
-
 	}
 
 	public Status publishResponse(String response) {
@@ -119,6 +126,7 @@ public class TwitterClient {
 		}
 		return null;
 	}
+	
 	public Twitter getTwitInst() {
 		return twitInst;
 	}
