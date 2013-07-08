@@ -9,7 +9,7 @@ public class MainBotResponder {
 			System.out.println("Incorrect input");
 			System.exit(0);
 		}
-		LocalBot bot = new LocalBot(args[0]);
+		Bot bot = new Bot(args[0]);
 		bot.createAndPublish();
 	}
 }

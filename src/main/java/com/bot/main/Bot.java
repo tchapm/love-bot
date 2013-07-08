@@ -1,44 +1,33 @@
 package com.bot.main;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Random;
 import java.util.StringTokenizer;
-import java.util.TimeZone;
-import java.util.TreeMap;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import twitter4j.Status;
 
-import com.bot.main.LocalBot.BotTraits;
 import com.bot.twitter.TwitterClient;
 
 
-public class LocalBot {
-	private static final int TIME_BETWEEN_CHECKS_LOVE = 4;
-	private static final int TIME_BETWEEN_CHECKS_POE = 5;
+public class Bot {
 	private static final String GENERIC_START_WORD = "What";
 	private TwitterClient twitClient;
 	public HashMap<String, HashMap<String, Integer>> wordMap = new HashMap<String, HashMap<String, Integer>>();
 	public HashMap<String, HashMap<String, Float>> wordProbablityMap = new HashMap<String, HashMap<String, Float>>();
 	private int numWords=0;
-
 	private BotTraits botType;
+	static final Logger logger = Logger.getLogger(Bot.class);
 
 	public enum BotTraits {
 		BOT1("HPbotcraft", "lovecraft.token", "lovecraft.secret", 4),
@@ -56,12 +45,11 @@ public class LocalBot {
 		public final int checkTime;
 	}
 
-	public LocalBot(String botName) {
+	public Bot(String botName) {
+		PropertyConfigurator.configure("log4j.properties");
 		this.botType = (botName.equals(BotTraits.BOT1.name)) ? BotTraits.BOT1 : botName.equals(BotTraits.BOT2.name) ? BotTraits.BOT2 : null;
 		this.twitClient = new TwitterClient(botType);
 	}
-
-
 
 	public void createAndPublish() throws IOException {
 		ArrayList<Response> comments = parseMentions();
@@ -75,7 +63,8 @@ public class LocalBot {
 			makeTweets(comments);
 			publishResponseTweet(comments);
 		}else{
-			System.out.println("No valid comments");
+			logger.info("No valid comments in time period");
+			System.exit(0);
 		}
 
 	}
@@ -86,7 +75,7 @@ public class LocalBot {
 
 		//pull in the corpus to analize
 		inputCorpus();
-		System.out.println("\nWords filled: " + getNumWords());
+		logger.info("\nWords filled: " + getNumWords());
 		setProbability();
 		makeTweets(comments);
 		twitClient.publishFriendTweet(comments);
@@ -159,7 +148,7 @@ public class LocalBot {
 				tweet = getTweet(commentator, searchWord);
 			}
 			comments.get(i).setResponse(tweet);
-			System.out.println(i+1 + ".   " + comments.get(i).getResponse());
+			logger.info(i+1 + ".   " + comments.get(i).getResponse());
 		}
 	}
 
@@ -178,12 +167,16 @@ public class LocalBot {
 		} else {
 			nextWord = GENERIC_START_WORD;
 		}
-		while((sb.length() + nextWord.length()) < 140){
-			sb.append(" " + nextWord);
-			if(hasPunctuation(nextWord) && sb.length()>70){
-				break;
+		try{
+			while((sb.length() + nextWord.length()) < 140){
+				sb.append(" " + nextWord);
+				if(hasPunctuation(nextWord) && sb.length()>70){
+					break;
+				}
+				nextWord = this.getNext(nextWord);
 			}
-			nextWord = this.getNext(nextWord);
+		} catch(Exception e){
+			logger.error("NULL getTweet():   " + sb.toString());
 		}
 		return sb.toString();
 	}
@@ -215,15 +208,14 @@ public class LocalBot {
 			for(Response comment : comments){
 				Date twtDate = comment.getDate();
 				if(twtDate.after(cutoffTime)){
-					System.out.println("Tweet is within the last search");
+					logger.info("Tweet is within the last search");
 					Status st = twitClient.publishResponse(comment.getResponse());
 					tweetId = st.getId();
 				}
-				System.out.println("Current: " + cutoffTime.toString());
-				System.out.println("Tweet: " + twtDate.toString());
+				logger.info("Current time: " + cutoffTime.toString() + " --- Tweet time: " + twtDate.toString());
 			}
 		}catch (Exception e){
-			System.err.println("Error: " + e.getMessage());
+			logger.error(e);
 		}
 		return tweetId;
 

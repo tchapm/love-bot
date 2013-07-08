@@ -11,14 +11,14 @@ import org.junit.Ignore;
 import org.junit.Test;
 import twitter4j.TwitterException;
 
-public class TestLocalBot {
+public class TestBot {
 
-	@Ignore
+	@Test
 	public void testPublishResponseDate() throws InterruptedException{
 		Response testRes = new Response("Test");
 		testRes.setDate(new Date());
 		testRes.setResponse("Eldrich horrors!");
-		LocalBot lb = new LocalBot("HPbotcraft");
+		Bot lb = new Bot("HPbotcraft");
 		ArrayList<Response> lbList = new ArrayList<Response>();
 		lbList.add(testRes);
 		long tweetId = lb.publishResponseTweet(lbList);
@@ -35,15 +35,15 @@ public class TestLocalBot {
 	
 	@Test
 	public void testInputCorpus() throws IOException{
-		LocalBot lb = new LocalBot("HPbotcraft");
+		Bot lb = new Bot("HPbotcraft");
 		lb.inputCorpus();
 		HashMap<String, Integer> testMap = lb.wordMap.get("death");
 		Assert.assertEquals(1,(int)testMap.get("struggle"));
 		lb.setProbability();
 		String tweet = lb.getTweet("Steve", "struggle!");
 		Assert.assertEquals(true, tweet.length()>0);
-		Assert.assertEquals(true, tweet.startsWith("Steve struggle"));
+		Assert.assertEquals(true, tweet.startsWith("@Steve struggle"));
 		tweet = lb.getTweet("Steve", "sfsdfsdfds");
-		Assert.assertEquals(true, tweet.startsWith("Steve What"));
+		Assert.assertEquals(true, tweet.startsWith("@Steve What"));
 	}
 }

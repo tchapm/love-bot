@@ -1,7 +1,6 @@
 package com.bot.main;
 import java.util.Date;
 import java.util.Random;
-import java.util.StringTokenizer;
 
 
 public class Response {
@@ -14,6 +13,11 @@ public class Response {
 	public Response(String theFollower) throws InterruptedException {
 		this.commentor = theFollower;
 		this.searchWord = Response.genRandomStart(theFollower);
+	}
+	public Response(String text, String screenName, Date createdAt) {
+		this.setSearchString(text);
+		this.commentor = screenName;
+		this.date = createdAt;
 	}
 	private static String genRandomStart(String follower) throws InterruptedException {
 		String startWord;
@@ -60,8 +64,7 @@ public class Response {
 		}
 		this.searchWord = startWord;
 	}
-	public Response() {
-	}
+
 	public String getDateStr() {
 		return dateStr;
 	}
