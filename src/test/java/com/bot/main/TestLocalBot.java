@@ -21,7 +21,7 @@ public class TestLocalBot {
 		LocalBot lb = new LocalBot("HPbotcraft");
 		ArrayList<Response> lbList = new ArrayList<Response>();
 		lbList.add(testRes);
-		long tweetId = lb.publishResponseTweetNew(lbList);
+		long tweetId = lb.publishResponseTweet(lbList);
 		Assert.assertEquals(true, tweetId>0);
 		try {
 			if(tweetId>0){
@@ -40,7 +40,10 @@ public class TestLocalBot {
 		HashMap<String, Integer> testMap = lb.wordMap.get("death");
 		Assert.assertEquals(1,(int)testMap.get("struggle"));
 		lb.setProbability();
-		Assert.assertEquals(true, lb.getTweet("Steve", "struggle!").length()>0);
-		lb.getNext("test");
+		String tweet = lb.getTweet("Steve", "struggle!");
+		Assert.assertEquals(true, tweet.length()>0);
+		Assert.assertEquals(true, tweet.startsWith("Steve struggle"));
+		tweet = lb.getTweet("Steve", "sfsdfsdfds");
+		Assert.assertEquals(true, tweet.startsWith("Steve What"));
 	}
 }

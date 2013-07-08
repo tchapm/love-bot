@@ -73,7 +73,7 @@ public class TwitterClient {
 				tweet.setSearchString(mention.getText());
 				tweet.setCommentor(mention.getUser().getScreenName());
 				tweet.setDate(mention.getCreatedAt());
-				if(tweet.getDateStr()!=null && tweet.getSearchWord()!=null && tweet.getCommentor()!=null){
+				if(tweet.getDate()!=null && tweet.getSearchWord()!=null && tweet.getCommentor()!=null){
 					comments.add(tweet);
 				}
 			}
@@ -83,10 +83,10 @@ public class TwitterClient {
 		return comments;
 	}
 	
-	public ArrayList<Response> getFollowers(){
+	public ArrayList<Response> getFollowers(BotTraits bt){
 		ArrayList<Response> followers = new ArrayList<Response>();
 		try {
-			IDs ids = twitInst.getFollowersIDs("HPbotcraft", -1);
+			IDs ids = twitInst.getFollowersIDs(bt.name, -1);
 			for(long id : ids.getIDs()){
 				Response theFollower = new Response("@" + twitInst.showUser(id).getScreenName());
 				followers.add(theFollower);

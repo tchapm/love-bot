@@ -32,17 +32,17 @@ import com.bot.twitter.TwitterClient;
 public class LocalBot {
 	private static final int TIME_BETWEEN_CHECKS_LOVE = 4;
 	private static final int TIME_BETWEEN_CHECKS_POE = 5;
-	private static final String GENERIC_START_WORD = "When";
+	private static final String GENERIC_START_WORD = "What";
 	private TwitterClient twitClient;
 	public HashMap<String, HashMap<String, Integer>> wordMap = new HashMap<String, HashMap<String, Integer>>();
 	public HashMap<String, HashMap<String, Float>> wordProbablityMap = new HashMap<String, HashMap<String, Float>>();
 	private int numWords=0;
-	
+
 	private BotTraits botType;
 
 	public enum BotTraits {
 		BOT1("HPbotcraft", "lovecraft.token", "lovecraft.secret", 4),
-		BOT2("EdgarAllenBot", "poe.token", "poe.secret", 5);
+		BOT2("EdgarAllanBot", "poe.token", "poe.secret", 5);
 
 		private BotTraits(String name, String token, String secret, int checkTime){
 			this.name = name;
@@ -55,30 +55,29 @@ public class LocalBot {
 		public final String secret;
 		public final int checkTime;
 	}
-	
+
 	public LocalBot(String botName) {
 		this.botType = (botName.equals(BotTraits.BOT1.name)) ? BotTraits.BOT1 : botName.equals(BotTraits.BOT2.name) ? BotTraits.BOT2 : null;
 		this.twitClient = new TwitterClient(botType);
 	}
-	
+
 
 
 	public void createAndPublish() throws IOException {
 		ArrayList<Response> comments = parseMentions();
-
-		//String firstWord = new String("can");
-		//String nextWord = null;
-		//int sentenceNum = 10;
-		//int currSentence = 0;
+		comments = getMentionsInTime(comments);
 
 		//pull in the corpus to analize
-		inputCorpus();
-		System.out.println("\nWords filed: " + getNumWords());
-		//System.out.println("The number of I is = " + lovecraft.wordMap.get("I"));
-		setProbability();
-		makeTweets(comments);
-		publishResponseTweetNew(comments);
-		
+		if(comments.size()>0){
+			inputCorpus();
+			System.out.println("\nWords filled: " + getNumWords());
+			setProbability();
+			makeTweets(comments);
+			publishResponseTweet(comments);
+		}else{
+			System.out.println("No valid comments");
+		}
+
 	}
 
 
@@ -87,47 +86,20 @@ public class LocalBot {
 
 		//pull in the corpus to analize
 		inputCorpus();
-		System.out.println("\nWords filed: " + getNumWords());
+		System.out.println("\nWords filled: " + getNumWords());
 		setProbability();
 		makeTweets(comments);
-//		twitClient.publishFriendTweet(comments);
-		
+		twitClient.publishFriendTweet(comments);
+
 	}
-	
+
 	public ArrayList<Response> getFollowers() {
-		return twitClient.getFollowers();
+		return twitClient.getFollowers(botType);
 	}
-	
-//	public LinkedList<Response> getFollowers(BufferedReader input) throws IOException, InterruptedException {
-//		String str;
-//		LinkedList<Response> followers = new LinkedList<Response>();
-//		while ((str = input.readLine()) != null) {
-//			if ((botType.equals(LOVE_NAME) && !str.equals(POE_NAME))
-//					|| (botType.equals(POE_NAME) && !str.equals(LOVE_NAME))){
-//				Response theFollower = new Response("@" + str);
-//				followers.add(theFollower);
-//			}
-//		}
-//		return followers;
-//	}
-	
+
 	public ArrayList<Response> parseMentions() {
 		return twitClient.parseMentions();
 	}
-	
-//	public LinkedList<Response> parseInTweets(BufferedReader in) throws IOException {
-//		LinkedList<Response> comments = new LinkedList<Response>();
-//		while(in.ready()){
-//			Response tweet = new Response();
-//			tweet.setSearchString(in.readLine());
-//			tweet.setCommentor(in.readLine());
-//			tweet.setDateStr(in.readLine());
-//			if(tweet.getDateStr()!=null && tweet.getSearchWord()!=null && tweet.getCommentor()!=null){
-//				comments.add(tweet);
-//			}
-//		}
-//		return comments;
-//	}
 
 	public void inputCorpus() throws IOException {
 		String dirName = "src/main/resources/" + botType.name + "_text";
@@ -142,7 +114,7 @@ public class LocalBot {
 			}
 		}
 	}
-	
+
 	public void fillMap(BufferedReader in) throws IOException{
 		String str = null;
 		String secondWord = null;
@@ -153,8 +125,8 @@ public class LocalBot {
 			StringTokenizer st = new StringTokenizer(str);
 			this.numWords+=st.countTokens();
 			if(st.hasMoreTokens()){
-	    		secondWord = st.nextToken();
-	    	}
+				secondWord = st.nextToken();
+			}
 			while (st.hasMoreTokens()) {
 				firstWord = secondWord;
 				secondWord = st.nextToken();
@@ -177,7 +149,7 @@ public class LocalBot {
 			}
 		}
 	}
-	
+
 	public void makeTweets(ArrayList<Response> comments) {
 		for(int i=0; i<comments.size(); i++){
 			String tweet = "";
@@ -187,97 +159,56 @@ public class LocalBot {
 				tweet = getTweet(commentator, searchWord);
 			}
 			comments.get(i).setResponse(tweet);
-			System.out.println(i + ".   " + comments.get(i).getResponse());
+			System.out.println(i+1 + ".   " + comments.get(i).getResponse());
 		}
 	}
-	
+
 	public String getTweet(String commentor, String srchWrd){
-		StringBuilder sb = new StringBuilder(commentor);
+		StringBuilder sb = new StringBuilder("@" + commentor);
 		String nextWord = srchWrd;
-		sb.append(" " + nextWord);
-		try{
-			if(wordProbablityMap.containsKey(nextWord)){
-				nextWord = this.getNext(nextWord);
-			} else if(wordProbablityMap.containsKey(nextWord.toLowerCase())){
-				nextWord = this.getNext(nextWord.toLowerCase());
-			} else if(wordProbablityMap.containsKey(stripPunctuation(nextWord))){
-				nextWord = this.getNext(nextWord.substring(0, (nextWord.length()-1)));
-			} else {
-				nextWord = this.getNext(nextWord);
-			}
-			while((sb.length() + nextWord.length()) < 140){
-				sb.append(" " + nextWord);
-				if(hasPunctuation(nextWord) && sb.length()>70){
-					break;
-				}
-				nextWord = this.getNext(nextWord);
-			}
-			//tweet = tweet.concat("...");
-		}catch (Exception e){
-			sb = new StringBuilder(commentor);
+		if(wordProbablityMap.containsKey(nextWord)){
+			sb.append(" " + nextWord);
+			nextWord = this.getNext(nextWord);
+		} else if(wordProbablityMap.containsKey(nextWord.toLowerCase())){
+			sb.append(" " + nextWord);
+			nextWord = this.getNext(nextWord.toLowerCase());
+		} else if(wordProbablityMap.containsKey(stripPunctuation(nextWord))){
+			sb.append(" " + nextWord);
+			nextWord = this.getNext(nextWord.substring(0, (nextWord.length()-1)));
+		} else {
 			nextWord = GENERIC_START_WORD;
-			while((sb.length() + nextWord.length()) < 140){
-				sb.append(" " + nextWord);
-				if((nextWord.contains(".") || nextWord.contains("?") ||
-						nextWord.contains("!")) && sb.length()>70){
-					break;
-				}
-				nextWord = this.getNext(nextWord);
+		}
+		while((sb.length() + nextWord.length()) < 140){
+			sb.append(" " + nextWord);
+			if(hasPunctuation(nextWord) && sb.length()>70){
+				break;
 			}
+			nextWord = this.getNext(nextWord);
 		}
 		return sb.toString();
 	}
-	
-
-//	public void publishResponseTweet(LinkedList<Response> comments) {
-//		try{
-//			DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");//ISODateTimeFormat.dateTime();
-//			DateTime londonTime = new DateTime();
-//			//timestamp of tweets
-//			londonTime = londonTime.withZone(DateTimeZone.forID("America/Los_Angeles"));
-//			DateTime tweetTime;
-//			if(TimeZone.getDefault().inDaylightTime(new Date())){
-//				londonTime = londonTime.plusHours(7);
-//			}else{
-//				londonTime = londonTime.plusHours(8);
-//			}
-//
-//			FileWriter fstream = null;
-//			String outTweets =  this.path + "tweets/outTweets" + this.botType + ".txt";
-//			fstream = new FileWriter(outTweets); 
-//
-//			BufferedWriter out = new BufferedWriter(fstream);
-//			for(int i=0; i<comments.size(); i++){	
-//				tweetTime = fmt.parseDateTime(comments.get(i).getDateStr());
-//				if (this.botType.equals(LOVE_NAME)) {
-//					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_LOVE); //set this based on the time between checks
-//				}else if (this.botType.equals(POE_NAME)) {
-//					tweetTime = tweetTime.plusMinutes(TIME_BETWEEN_CHECKS_POE); 
-//				}
-//				if(tweetTime.isAfter(londonTime)){
-//					System.out.println("Tweet is within the last search");
-//					out.write(comments.get(i).getResponse() + "\n");
-//				}
-//				System.out.println("Current: " + londonTime.toString());
-//				System.out.println("Tweet: " + tweetTime.toString());
-//			}
-//			out.close();
-//		}catch (Exception e){//Catch exception if any
-//			System.err.println("Error: " + e.getMessage());
-//		}
-//		
-//	}
 
 	private Object stripPunctuation(String word) {
 		return hasPunctuation(word) ? word.substring(0, (word.length()-1)) : word;
 	}
 
 	private boolean hasPunctuation(String nextWord) {
-		return (nextWord.endsWith(".") || nextWord.endsWith("?") ||
-		nextWord.endsWith("!"));
+		return (nextWord.endsWith(".") || nextWord.endsWith("?") || nextWord.endsWith("!"));
 	}
 
-	public long publishResponseTweetNew(ArrayList<Response> comments) {
+	private ArrayList<Response> getMentionsInTime(ArrayList<Response> comments) {
+		ArrayList<Response> validComments = new ArrayList<Response>();
+		Date cutoffTime = getCutoffTime();
+		for(Response comment : comments){
+			Date twtDate = comment.getDate();
+			if(twtDate.after(cutoffTime)){
+				validComments.add(comment);
+			}
+		}
+		return validComments;
+	}
+
+	public long publishResponseTweet(ArrayList<Response> comments) {
 		long tweetId = 0;
 		try{
 			Date cutoffTime = getCutoffTime();
@@ -295,7 +226,7 @@ public class LocalBot {
 			System.err.println("Error: " + e.getMessage());
 		}
 		return tweetId;
-		
+
 	}
 
 	private Date getCutoffTime() {
@@ -304,50 +235,7 @@ public class LocalBot {
 		cd.add(Calendar.MINUTE,	-botType.checkTime);
 		return new Date(cd.getTimeInMillis());
 	}
-	
-//	public void publishFriendTweet(LinkedList<Response> comments) throws IOException {
-//		FileWriter fstream = null;
-//		String outTweets =  this.path + "tweets/outFollow" + this.botType + ".txt";
-//		fstream = new FileWriter(outTweets); 	
-//		BufferedWriter out = new BufferedWriter(fstream);
-//		for(int i=0; i<comments.size(); i++){	
-//			out.write(comments.get(i).getResponse() + "\n");
-//		}
-//		out.close();
-//	}
 
-
-//	private String getNext(String firstWord) {
-//		String keyLower = null;
-//		String keyUpper = null;
-//		float value;
-//		Random generator = new Random();
-//		float randomIndex = generator.nextFloat()*100;
-//		if (!this.wordProbablityMap.containsKey(firstWord)){
-//			return null;
-//		}
-//		
-//		ValueComparator bvc =  new ValueComparator(this.wordProbablityMap.get(firstWord));
-//        TreeMap<String,Float> sortedMap = new TreeMap<String,Float>(bvc);
-//        sortedMap.putAll(this.wordProbablityMap.get(firstWord));
-//		Iterator<String> it = sortedMap.keySet().iterator();
-//		keyLower = (String)it.next();
-//		
-//		while (it.hasNext()) {
-//			keyUpper = (String)it.next();
-////			HashMap<String, Float> temp  = this.wordProbablityMap.get(firstWord);
-//			value = sortedMap.get(keyLower);
-////			value = this.wordProbablityMap.get(firstWord).get(keyLower);
-//			if (randomIndex<=value) {
-//				return keyLower;
-//			} else if(randomIndex>value && randomIndex<=this.wordProbablityMap.get(firstWord).get(keyUpper)){
-//				return keyUpper;
-//			}
-//			keyLower = keyUpper;
-//		}
-//		return keyLower;
-//	}
-	
 	public String getNext(String firstWord) {
 		String closestWord = null;
 		Random generator = new Random();
@@ -366,51 +254,32 @@ public class LocalBot {
 		}
 		return closestWord;
 	}
-	
-//	class ValueComparator implements Comparator<String> {
-//	    HashMap<String, Float> base;
-//	    public ValueComparator(HashMap<String, Float> hashMap) {
-//	        this.base = hashMap;
-//	    }
-//
-//	    public int compare(String a, String b) {
-//	        if (base.get(a) > base.get(b)) {
-//	            return 1;
-//	        } else if (base.get(a)==base.get(b)){
-//	        	return 0;
-//	        }else{
-//	            return -1;
-//	        } 
-//	    }
-//	}
 
 	public void setProbability(){
 		for(String key : wordMap.keySet()){
-			this.setPercentage(key);
+			wordProbablityMap.put(key, setPercentage(key));
 		}
 	}
-	
-	public void setPercentage(String firstWord){
-		Iterator<String> it = this.wordMap.get(firstWord).keySet().iterator();
+
+	public HashMap<String,Float> setPercentage(String firstWord){
 		int secondWordCount;
-		int secondWordSum = this.getSum(firstWord);
+		int secondWordSum = getSum(firstWord);
 		float percent = 0;
-		HashMap<String,Float> tempMap = new HashMap<String,Float>();
-		while (it.hasNext()) {
-			String key = (String)it.next();
-			secondWordCount=this.wordMap.get(firstWord).get(key);
+		HashMap<String,Float> wordPercentMap = new HashMap<String,Float>();
+		HashMap<String, Integer> firstWordMap = wordMap.get(firstWord);
+		for(String keyWord : firstWordMap.keySet() ){
+			secondWordCount = firstWordMap.get(keyWord);
 			percent += ((float)secondWordCount/(float)secondWordSum)*100;
-			tempMap.put(key, percent);
+			wordPercentMap.put(keyWord, percent);
 		}
-		this.wordProbablityMap.put(firstWord, tempMap);
+		return wordPercentMap;
 	}
-	
+
 	public Integer getSum(String firstWord){
 		Integer sum = 0;
-		Iterator<String> it = this.wordMap.get(firstWord).keySet().iterator();
-		while (it.hasNext()) {
-			String secondWord = (String)it.next();
-			sum+=this.wordMap.get(firstWord).get(secondWord);
+		HashMap<String, Integer> firstWordMap = wordMap.get(firstWord);
+		for(String secondWord : firstWordMap.keySet()){
+			sum += firstWordMap.get(secondWord);
 		}
 		return sum;
 	}
