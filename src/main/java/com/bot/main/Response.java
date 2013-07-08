@@ -2,6 +2,8 @@ package com.bot.main;
 import java.util.Date;
 import java.util.Random;
 
+import com.bot.utils.StringUtils;
+
 
 public class Response {
 	private String commentor = null;
@@ -14,11 +16,13 @@ public class Response {
 		this.commentor = theFollower;
 		this.searchWord = Response.genRandomStart(theFollower);
 	}
+	
 	public Response(String text, String screenName, Date createdAt) {
 		this.setSearchString(text);
 		this.commentor = screenName;
 		this.date = createdAt;
 	}
+	
 	private static String genRandomStart(String follower) throws InterruptedException {
 		String startWord;
 		Random generator = new Random(System.currentTimeMillis() + follower.length());
@@ -46,6 +50,7 @@ public class Response {
 		}
 		return startWord;
 	}
+	
 	public void setSearchString(String inQuestion) {
 		String startWord;
 		Random generator = new Random(System.currentTimeMillis());
@@ -59,9 +64,7 @@ public class Response {
 				startWord=words[rand+1];
 			}
 		}
-		if(startWord.endsWith(".") || startWord.endsWith("?") || startWord.endsWith("!")){
-			startWord = startWord.substring(0, startWord.length()-1);
-		}
+		startWord = StringUtils.stripPunctuation(startWord);
 		this.searchWord = startWord;
 	}
 
