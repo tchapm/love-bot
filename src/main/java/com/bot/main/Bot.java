@@ -25,35 +25,23 @@ import com.bot.utils.StringUtils;
  */
 public class Bot {
 	private TwitterClient twitClient;
-	private BotTraits botType;
+	private int checkTime;
+	private String botName;
 	private static Date searchTime = new Date();
 	static final Logger logger = Logger.getLogger(Bot.class);
-
-	/**
-	 * Bot is setup to only recognize the two bots; HPbotcraft and EdgarAllanBot. They are designed to
-	 * be able to tweet at each other every 5 minutes. The delay is put in to control the number of 
-	 * tweets with one another
-	 */
-	public enum BotTraits {
-		BOT1("HPbotcraft", "lovecraft.token", "lovecraft.secret", 4),
-		BOT2("EdgarAllanBot", "poe.token", "poe.secret", 5);
-
-		private BotTraits(String name, String token, String secret, int checkTime){
-			this.name = name;
-			this.token = token;
-			this.secret = secret;
-			this.checkTime = checkTime;
-		}
-		public final String name;
-		public final String token;
-		public final String secret;
-		public final int checkTime;
+	
+	static {
+		PropertyConfigurator.configure("log4j.properties");
 	}
 
+	public Bot(String botName, int checkTime) {
+		this.botName = botName;
+		this.checkTime = checkTime;
+		this.twitClient = new TwitterClient(botName);
+	}
 	public Bot(String botName) {
-		PropertyConfigurator.configure("log4j.properties");
-		this.botType = (botName.equals(BotTraits.BOT1.name)) ? BotTraits.BOT1 : botName.equals(BotTraits.BOT2.name) ? BotTraits.BOT2 : null;
-		this.twitClient = new TwitterClient(botType);
+		this.botName = botName;
+		this.twitClient = new TwitterClient(botName);
 	}
 	/**
 	 * Method to acquire mentions of bot and respond to the users who mentioned. It checks to see if
@@ -63,12 +51,11 @@ public class Bot {
 	 */
 	public void createAndPublish() throws IOException {
 		ArrayList<Response> comments = parseMentions();
-		comments = getMentionsInTime(comments, botType.checkTime);
-		//pull in the corpus to analize
+		comments = getMentionsInTime(comments, checkTime);
 		if(comments.size()>0){
-			Corpus botCorp = new Corpus(botType.name);
+			Corpus botCorp = new Corpus(botName);
 			makeTweets(botCorp.getwordProbablityMap(), comments);
-			publishResponseTweet(comments, botType.checkTime);
+			publishResponseTweet(comments, checkTime);
 		}else{
 			logger.info("No valid comments in time period");
 			System.exit(0);
@@ -81,15 +68,13 @@ public class Bot {
 	 */
 	public void getFollowersAndPublish() throws IOException {
 		ArrayList<Response> comments = getFollowers();
-		//pull in the corpus to analize
-		Corpus botCorp = new Corpus(botType.name);
+		Corpus botCorp = new Corpus(botName);
 		makeTweets(botCorp.getwordProbablityMap(), comments);
 		twitClient.publishFriendTweet(comments);
-
 	}
 
 	public ArrayList<Response> getFollowers() {
-		return twitClient.getFollowers(botType);
+		return twitClient.getFollowers(botName);
 	}
 
 	public ArrayList<Response> parseMentions() {
@@ -113,7 +98,7 @@ public class Bot {
 		}
 	}
 	/**
-	 * Method to create tweet with a markof chain and commenter. If the start word isn't in the corpus a
+	 * Method to create tweet with a markov chain and commenter. If the start word isn't in the corpus a
 	 * generic starting word is selected. If the generated tweet has punctuation and is greater than 70
 	 * characters it will be returned immediately otherwise it will keep generating words until it is about
 	 * to go over the 140 character limit. 
@@ -124,47 +109,53 @@ public class Bot {
 	 */
 	public String getTweet(HashMap<String, HashMap<String, Float>> wordProbablityMap, String commenter, String srchWrd){
 		StringBuilder sb = new StringBuilder("@" + commenter);
-		String nextWord;
-		if(wordProbablityMap.containsKey(srchWrd)){
-			sb.append(" " + srchWrd);
-			nextWord = getNext(wordProbablityMap, srchWrd);
-		} else if(wordProbablityMap.containsKey(srchWrd.toLowerCase())){
-			sb.append(" " + srchWrd);
-			nextWord = getNext(wordProbablityMap, srchWrd.toLowerCase());
-		} else if(wordProbablityMap.containsKey(StringUtils.stripPunctuation(srchWrd))){
-			sb.append(" " + srchWrd);
-			nextWord = getNext(wordProbablityMap, srchWrd.substring(0, (srchWrd.length()-1)));
-		} else {
-			nextWord = Response.genRandomStart(srchWrd);
-		}
-		try{
-			while((sb.length() + nextWord.length()) < 140){
-				sb.append(" " + nextWord);
-				if(StringUtils.hasPunctuation(nextWord) && sb.length()>70){
-					break;
-				}
+		String nextWord = getStartSentence(wordProbablityMap, srchWrd);
+		while((sb.length() + nextWord.length()) < 140){
+			sb.append(" " + nextWord);
+			if(StringUtils.hasPunctuation(nextWord) && sb.length()>70){
+				return sb.toString();
+			}else if(!wordProbablityMap.containsKey(nextWord)) {
+				nextWord = getStartSentence(wordProbablityMap, nextWord);
+			}else {
 				nextWord = getNext(wordProbablityMap, nextWord);
 			}
-		} catch(Exception e){
-			logger.error("NULL getTweet():   " + sb.toString());
 		}
 		return sb.toString();
 	}
 	/**
-	 * Method to get next word in the markof chain following firstWord. It generates a float that is between
+	 * Method to get the word that starts a sentence. This is complex for markov chaining because some words in the corpus
+	 * will not have words following them if they are at the end of paragraphs or chapters. Instead of compensating for 
+	 * this at the point of ingestion it is done here by looking for different word.
+	 * @param wordProbablityMap
+	 * @param srchWrd
+	 * @return
+	 */
+	private String getStartSentence(HashMap<String, HashMap<String, Float>> wordProbablityMap, String srchWrd) {
+		if(wordProbablityMap.containsKey(srchWrd)){
+			return srchWrd;
+		} else if(wordProbablityMap.containsKey(srchWrd.toLowerCase())){
+			return srchWrd.toLowerCase();
+		} else if(wordProbablityMap.containsKey(StringUtils.stripPunctuation(srchWrd))){
+			return StringUtils.stripPunctuation(srchWrd);
+		} else {
+			return Response.genRandomStart(srchWrd);
+		}
+	}
+	/**
+	 * Method to get next word in the markov chain following firstWord. It generates a float that is between
 	 * 0-100 then finds the word with the closest number without going over. This is a property of how the
 	 * wordProbabilityMap was created. This allows for an O(n) search for the next word since they are not ordered
 	 * within the HashMap.
 	 * @param wordProbablityMap
 	 * @param firstWord
-	 * @return following word in the markof chain
+	 * @return following word in the markov chain
 	 */
 	public String getNext(HashMap<String, HashMap<String, Float>> wordProbablityMap, String firstWord) {
 		String closestWord = null;
 		Random generator = new Random();
 		float randomIndex = generator.nextFloat()*100;
 		if (!wordProbablityMap.containsKey(firstWord)){
-			return null;
+			return Response.genRandomStart(firstWord);
 		}
 		float nearDist = Float.MAX_VALUE;
 		HashMap<String, Float> wordProb = wordProbablityMap.get(firstWord);

@@ -49,7 +49,7 @@ public class Corpus {
 			for (File f : dir.listFiles()){
 				if(!f.isHidden()){
 					BufferedReader inCorpus = new BufferedReader(new FileReader(f));
-					theWordMap = fillMap(inCorpus);
+					theWordMap = fillMap(inCorpus, theWordMap);
 					inCorpus.close();
 				}
 			}
@@ -63,12 +63,11 @@ public class Corpus {
 	 * the words that follow
 	 * @throws IOException
 	 */
-	public HashMap<String, HashMap<String, Integer>> fillMap(BufferedReader in) throws IOException{
+	public HashMap<String, HashMap<String, Integer>> fillMap(BufferedReader in, HashMap<String, HashMap<String, Integer>> theWordMap) throws IOException{
 		String str = null;
 		String secondWord = null;
 		String firstWord = null;
 		HashMap<String,Integer> tempMap;
-		HashMap<String, HashMap<String, Integer>> theWordMap = new HashMap<String, HashMap<String,Integer>>();
 		int tempInt;
 		while ((str = in.readLine()) != null) {
 			StringTokenizer st = new StringTokenizer(str);
