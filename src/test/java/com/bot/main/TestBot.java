@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import junit.framework.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import twitter4j.TwitterException;
 

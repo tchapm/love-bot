@@ -3,8 +3,6 @@ package com.bot.twitter;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Properties;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import twitter4j.IDs;
 import twitter4j.ResponseList;
 import twitter4j.Status;
@@ -12,7 +10,9 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
+import com.bot.main.MainBotResponder;
 import com.bot.main.Response;
+
 /**
  * Class to connect to the twitter account of the twitter bot. Can get followers, tweets @bot, and 
  * publish responses. 
@@ -25,10 +25,8 @@ public class TwitterClient {
 	private static String CONSUMER_SECRET;
 	private static String ACCESS_TOKEN;
 	private static String ACCESS_SECRET;
-	static final Logger logger = Logger.getLogger(TwitterClient.class);
 
 	public TwitterClient(String botName){
-		PropertyConfigurator.configure("log4j.properties");
 		readProperties(botName);
 		this.twitInst = getTwitterInstance();
 	}
@@ -43,7 +41,7 @@ public class TwitterClient {
 			fis = new FileInputStream("properties.xml");
 			props.loadFromXML(fis);
 		} catch (Exception e) {
-			logger.error(e);
+			MainBotResponder.logger.error(e);
 		}
 		CONSUMER_KEY = props.getProperty("oauth.consumer.key");
 		CONSUMER_SECRET = props.getProperty("oauth.consumer.secret");
@@ -51,7 +49,7 @@ public class TwitterClient {
 			ACCESS_TOKEN = props.getProperty(botName + ".token");
 			ACCESS_SECRET = props.getProperty(botName + ".secret");
 		}catch(Exception e){
-			logger.error("Invalid Bot name! " + e);
+			MainBotResponder.logger.error("Invalid Bot name! " + e);
 			System.exit(0);
 		}
 	}
@@ -88,7 +86,7 @@ public class TwitterClient {
 				}
 			}
 		} catch (TwitterException e) {
-			logger.error(e);
+			MainBotResponder.logger.error(e);
 		}
 		return comments;
 	}
@@ -102,7 +100,7 @@ public class TwitterClient {
 				followers.add(theFollower);
 			}
 		} catch (Exception e) {
-			logger.error(e);
+			MainBotResponder.logger.error(e);
 		}
 		return followers;
 	}
@@ -113,7 +111,7 @@ public class TwitterClient {
 				twitInst.updateStatus(comment.getResponse());
 			}
 		} catch (TwitterException e) {
-			logger.error(e);
+			MainBotResponder.logger.error(e);
 		}
 	}
 
@@ -121,7 +119,7 @@ public class TwitterClient {
 		try {
 			return twitInst.updateStatus(response);
 		} catch (TwitterException e) {
-			logger.error(e);
+			MainBotResponder.logger.error(e);
 		}
 		return null;
 	}

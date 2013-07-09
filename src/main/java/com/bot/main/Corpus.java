@@ -6,8 +6,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 
 /**
  * This class handles the corpus of the specific author. It grabs all of the text from the resources
@@ -17,20 +15,19 @@ import org.apache.log4j.PropertyConfigurator;
  * @author tchap
  *
  */
+
 public class Corpus {
 	HashMap<String, HashMap<String, Integer>> wordMap = new HashMap<String, HashMap<String, Integer>>();
 	HashMap<String, HashMap<String, Float>> wordProbablityMap = new HashMap<String, HashMap<String, Float>>();
 	private static final String RESOURCE_DIR_NAME = "src/main/resources/";
 	private static final String TEXT_PATH = "_text";
 	private int numWords = 0;
-	static final Logger logger = Logger.getLogger(Bot.class);
 	
 	public Corpus(String botName) {
-		PropertyConfigurator.configure("log4j.properties");
 		try {
 			this.wordMap = inputCorpus(botName);
 			this.wordProbablityMap = setProbability(wordMap);
-			logger.info("Words filled from " + botName + " corpus : " + getNumWords());
+			MainBotResponder.logger.info("Words filled from " + botName + " corpus : " + getNumWords());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

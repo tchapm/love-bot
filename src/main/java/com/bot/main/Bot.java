@@ -7,9 +7,9 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Random;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+
 import twitter4j.Status;
+
 import com.bot.twitter.TwitterClient;
 import com.bot.utils.StringUtils;
 
@@ -28,11 +28,6 @@ public class Bot {
 	private int checkTime;
 	private String botName;
 	private static Date searchTime = new Date();
-	static final Logger logger = Logger.getLogger(Bot.class);
-	
-	static {
-		PropertyConfigurator.configure("log4j.properties");
-	}
 
 	public Bot(String botName, int checkTime) {
 		this.botName = botName;
@@ -57,7 +52,7 @@ public class Bot {
 			makeTweets(botCorp.getwordProbablityMap(), comments);
 			publishResponseTweet(comments, checkTime);
 		}else{
-			logger.info("No valid comments in time period");
+			MainBotResponder.logger.info("No valid comments in time period");
 			System.exit(0);
 		}
 
@@ -94,7 +89,7 @@ public class Bot {
 				responseTweet = getTweet(wordProbablityMap, commentator, searchWord);
 			}
 			comments.get(i).setResponse(responseTweet);
-			logger.info(i+1 + ".   " + comments.get(i).getResponse());
+			MainBotResponder.logger.info(i+1 + ".   " + comments.get(i).getResponse());
 		}
 	}
 	/**
@@ -193,11 +188,11 @@ public class Bot {
 			for(Response comment : comments){
 				Status st = twitClient.publishResponse(comment.getResponse());
 				tweetId = st.getId();
-				logger.info("Tweet is within the last search");
-				logger.info("Tweet time: " + comment.getDate().toString());
+				MainBotResponder.logger.info("Tweet is within the last search");
+				MainBotResponder.logger.info("Tweet time: " + comment.getDate().toString());
 			}
 		}catch (Exception e){
-			logger.error(e);
+			MainBotResponder.logger.error(e);
 		}
 		return tweetId;
 	}
