@@ -6,16 +6,17 @@ import java.util.Date;
 import java.util.HashMap;
 import junit.framework.Assert;
 import org.junit.Test;
-import twitter4j.*;
+import twitter4j.TwitterException;
 
 public class TestBot {
-
+	private static final String botName = System.getProperty("botName");
+	
 	@Test
 	public void testPublishResponseDate() throws InterruptedException{
 		Response testRes = new Response("Test");
 		testRes.setDate(new Date());
 		testRes.setResponse("Eldrich horrors!");
-		Bot lb = new Bot("HPbotcraft");
+		Bot lb = new Bot(botName);
 		ArrayList<Response> lbList = new ArrayList<Response>();
 		lbList.add(testRes);
 		long tweetId = lb.publishResponseTweet(lbList);
@@ -32,8 +33,8 @@ public class TestBot {
 	
 	@Test
 	public void testInputCorpus() throws IOException{
-		Bot lb = new Bot("HPbotcraft");
-		Corpus cp = new Corpus("HPbotcraft");
+		Bot lb = new Bot(botName);
+		Corpus cp = new Corpus(botName);
 		HashMap<String, Integer> testMap = cp.wordMap.get("death");
 		Assert.assertEquals(2,(int)testMap.get("which"));
 		String tweet = lb.getTweet(cp.wordProbablityMap, "Steve", "which!");
