@@ -11,8 +11,9 @@ Setup
 -----
 
 * Download code: 
-> git clone https://github.com/tchapm/love-bot
-
+```
+git clone https://github.com/tchapm/love-bot
+```
 * Place your twitter authentication info in the properties file:
 				
 ```
@@ -26,17 +27,21 @@ Setup
 				
 * Place corpus in `src/main/resources/YourBotName_text` folder
 * Compile: 
-> mvn -DbotName=YourBotName
+```
+mvn -DbotName=YourBotName
+```
 
 Running
 -------
 * Run response: 
-> java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotResponder YourBotName TimeYouWantToRefresh
+```
+java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotResponder YourBotName TimeYouWantToRefresh
+```
 
 * Run tweets at followers: 
-> java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotFollowers YourBotName
+```
+java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotFollowers YourBotName
+```
 
-
-Contact
--------
+####Contact
 tchap00@gmail.com
