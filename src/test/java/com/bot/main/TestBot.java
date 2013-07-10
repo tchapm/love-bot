@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import junit.framework.Assert;
 import org.junit.Test;
-import twitter4j.TwitterException;
+import twitter4j.*;
 
 public class TestBot {
 
@@ -15,10 +15,10 @@ public class TestBot {
 		Response testRes = new Response("Test");
 		testRes.setDate(new Date());
 		testRes.setResponse("Eldrich horrors!");
-		Bot lb = new Bot("HPbotcraft", 5);
+		Bot lb = new Bot("HPbotcraft");
 		ArrayList<Response> lbList = new ArrayList<Response>();
 		lbList.add(testRes);
-		long tweetId = lb.publishResponseTweet(lbList, 5);
+		long tweetId = lb.publishResponseTweet(lbList);
 		Assert.assertEquals(true, tweetId>0);
 		try {
 			if(tweetId>0){
@@ -32,7 +32,7 @@ public class TestBot {
 	
 	@Test
 	public void testInputCorpus() throws IOException{
-		Bot lb = new Bot("HPbotcraft", 5);
+		Bot lb = new Bot("HPbotcraft");
 		Corpus cp = new Corpus("HPbotcraft");
 		HashMap<String, Integer> testMap = cp.wordMap.get("death");
 		Assert.assertEquals(2,(int)testMap.get("which"));

@@ -2,6 +2,7 @@ package com.bot.twitter;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Properties;
 import twitter4j.IDs;
 import twitter4j.ResponseList;
@@ -90,6 +91,36 @@ public class TwitterClient {
 		}
 		return comments;
 	}
+	
+	public ArrayList<Response> parseMentions(Date lastDate) {
+		ArrayList<Response> comments = new ArrayList<Response>();
+		try {
+			ResponseList<Status> mentions = twitInst.getMentionsTimeline();
+			for(Status mention : mentions){
+				if(mention.getCreatedAt().after(lastDate)){
+					Response tweet = new Response(mention.getText(), mention.getUser().getScreenName(),
+							mention.getCreatedAt());
+					if(tweet.getDate()!=null && tweet.getSearchWord()!=null && tweet.getCommenter()!=null){
+						comments.add(tweet);
+					}
+				}
+			}
+		} catch (TwitterException e) {
+			MainBotResponder.logger.error(e);
+		}
+		return comments;
+	}
+	
+	public Date getLastTweet(){
+		Date theDate = new Date();
+		try {
+			ResponseList<Status> mentions = twitInst.getMentionsTimeline();
+			theDate =  mentions.get(0).getCreatedAt();
+		} catch (TwitterException e) {
+			MainBotResponder.logger.error(e);
+		}
+		return theDate;
+	}
 
 	public ArrayList<Response> getFollowers(String botName){
 		ArrayList<Response> followers = new ArrayList<Response>();
@@ -131,4 +162,5 @@ public class TwitterClient {
 	public void setTwitInst(Twitter twitInst) {
 		this.twitInst = twitInst;
 	}
+
 }

@@ -25,15 +25,9 @@ import com.bot.utils.StringUtils;
  */
 public class Bot {
 	private TwitterClient twitClient;
-	private int checkTime;
 	private String botName;
 	private static Date searchTime = new Date();
 
-	public Bot(String botName, int checkTime) {
-		this.botName = botName;
-		this.checkTime = checkTime;
-		this.twitClient = new TwitterClient(botName);
-	}
 	public Bot(String botName) {
 		this.botName = botName;
 		this.twitClient = new TwitterClient(botName);
@@ -44,18 +38,35 @@ public class Bot {
 	 * once.
 	 * @throws IOException
 	 */
-	public void createAndPublish() throws IOException {
+	public void createAndPublish(int checkTime) throws IOException {
 		ArrayList<Response> comments = parseMentions();
 		comments = getMentionsInTime(comments, checkTime);
 		if(comments.size()>0){
 			Corpus botCorp = new Corpus(botName);
 			makeTweets(botCorp.getwordProbablityMap(), comments);
-			publishResponseTweet(comments, checkTime);
+			publishResponseTweet(comments);
 		}else{
 			MainBotResponder.logger.info("No valid comments in time period");
 			System.exit(0);
 		}
 
+	}
+	public void createAndPublishCont(int timePause) throws IOException, InterruptedException {
+		Corpus botCorp = new Corpus(botName);
+		Date lastDate = twitClient.getLastTweet();
+		while(true){
+			ArrayList<Response> comments = parseMentions(lastDate);
+			if(comments.size()>0){
+				makeTweets(botCorp.getwordProbablityMap(), comments);
+				publishResponseTweet(comments);
+				lastDate = comments.get(0).getDate();
+			}
+			Thread.sleep(timePause*1000*60);
+		}
+
+	}
+	private ArrayList<Response> parseMentions(Date lastDate) {
+		return twitClient.parseMentions(lastDate);
 	}
 	/**
 	 * Method to get a list of all the followers and publish a tweet at each of them
@@ -182,7 +193,7 @@ public class Bot {
 		return validComments;
 	}
 
-	public long publishResponseTweet(ArrayList<Response> comments, int checkTime) {
+	public long publishResponseTweet(ArrayList<Response> comments) {
 		long tweetId = 0;
 		try{
 			for(Response comment : comments){
