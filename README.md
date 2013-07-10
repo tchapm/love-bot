@@ -16,7 +16,7 @@ Setup
 * Place your twitter authentication info in the properties file:
 				
 				...
-				<entry key="oauth.consumer.key">your key</entry>
+	<entry key="oauth.consumer.key">your key</entry>
 				<entry key="oauth.consumer.secret">your secret</entry>
 				<entry key="YourBotName.token">bot name</entry>
 				<entry key="YourBotName.secret">bot secret</entry>
