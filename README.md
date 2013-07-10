@@ -10,21 +10,21 @@ It can run in two ways. The first responds to each tweet that has been tweeted a
 Setup
 -----
 
-* Download code: `git clone https://github.com/tchapm/love-bot`
+* Download code: > git clone https://github.com/tchapm/love-bot
 * Place your twitter authentication info in the properties file:
 
-	<entry key="oauth.consumer.key">your key</entry>
-	<entry key="oauth.consumer.secret">your secret</entry>
-	<entry key="YourBotName.token">bot name</entry>
-	<entry key="YourBotName.secret">bot secret</entry>
+				<entry key="oauth.consumer.key">your key</entry>
+				<entry key="oauth.consumer.secret">your secret</entry>
+				<entry key="YourBotName.token">bot name</entry>
+				<entry key="YourBotName.secret">bot secret</entry>
 
 * Place corpus in `src/main/resources/YourBotName_text` folder
-* Compile: `mvn -DbotName=YourBotName`
+* Compile: > mvn -DbotName=YourBotName
 
 Running
 -------
-* Run response: `java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotResponder YourBotName TimeYouWantToRefresh`
-* Run tweets at followers: `java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotFollowers YourBotName`
+* Run response: > java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotResponder YourBotName TimeYouWantToRefresh
+* Run tweets at followers: > java -cp ~/.m2/repository/bot/LoveBot/0.1-SNAPSHOT/LoveBot-0.1-SNAPSHOT.jar com.bot.main.MainBotFollowers YourBotName
 
 Contact
 -------
