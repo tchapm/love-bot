@@ -36,6 +36,7 @@ public class Bot {
 	 * Method to acquire mentions of bot and respond to the users who mentioned. It checks to see if
 	 * tweets came in since the last time it was checked to avoid responding to same tweet more than
 	 * once.
+	 * @param checkTime
 	 * @throws IOException
 	 */
 	public void createAndPublish(int checkTime) throws IOException {
@@ -51,6 +52,13 @@ public class Bot {
 		}
 
 	}
+	/**
+	 * Method to acquire mentions of bot and respond to the users who mentioned. It runs continously
+	 * and checks for new tweets after timePause minutes.
+	 * @param timePause amount of time bot sleeps between responses.
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
 	public void createAndPublishCont(int timePause) throws IOException, InterruptedException {
 		Corpus botCorp = new Corpus(botName);
 		Date lastDate = twitClient.getLastTweet();
