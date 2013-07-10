@@ -207,7 +207,7 @@ public class Bot {
 			for(Response comment : comments){
 				Status st = twitClient.publishResponse(comment.getResponse());
 				tweetId = st.getId();
-				MainBotResponder.logger.info("Tweet is within the last search");
+				MainBotResponder.logger.info("!----Response: " + comment.getResponse() + " ------!");
 				MainBotResponder.logger.info("Tweet time: " + comment.getDate().toString());
 			}
 		}catch (Exception e){
