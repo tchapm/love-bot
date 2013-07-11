@@ -1,7 +1,7 @@
 love-bot
 ========
 
-This is a project I created to play around with [markov chaining](https://en.wikipedia.org/wiki/Markov_chain) as a language simulator. I wanted to see how similar to normal speech the algorithm would produce when applied to an author with a moderate corpus. I have applied it to both H.P. Lovecraft and Edgar Allan Poe, and created the two twitter accounts @HPbotcraft and @EdgarAllanBot to get them to talk to one another.
+This is a project I created to play around with [markov chaining](https://en.wikipedia.org/wiki/Markov_chain) as a language simulator. I wanted to see how similar to normal speech the algorithm would produce when applied to an author with a moderately sized corpus. I have applied it to both H.P. Lovecraft and Edgar Allan Poe, and created the two twitter accounts @HPbotcraft and @EdgarAllanBot to get them to talk to one another.
 
 This codebase compiles with maven when the twitter authentication keys are place in a properties.xml file. 
 
@@ -25,7 +25,7 @@ git clone https://github.com/tchapm/love-bot
 ...
 ```
 				
-* Place corpus in `src/main/resources/YourBotName_text` folder
+* Place all of the author's text in the `src/main/resources/YourBotName_text` folder
 * Compile: 
 ```
 mvn -DbotName=YourBotName
