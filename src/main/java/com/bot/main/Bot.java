@@ -104,7 +104,7 @@ public class Bot {
 			String responseTweet = "";
 			String commentator = comments.get(i).getCommenter();
 			String searchWord = comments.get(i).getSearchWord();
-			while(!StringUtils.hasPunctuation(responseTweet)){
+			while(!StringUtils.isEndOfSentence(responseTweet)){
 				responseTweet = getTweet(wordProbablityMap, commentator, searchWord);
 			}
 			comments.get(i).setResponse(responseTweet);
@@ -126,7 +126,7 @@ public class Bot {
 		String nextWord = getStartSentence(wordProbablityMap, srchWrd);
 		while((sb.length() + nextWord.length()) < 140){
 			sb.append(" " + nextWord);
-			if(StringUtils.hasPunctuation(nextWord) && sb.length()>70){
+			if(StringUtils.isEndOfSentence(nextWord) && sb.length()>70){
 				return sb.toString();
 			}else if(!wordProbablityMap.containsKey(nextWord)) {
 				nextWord = getStartSentence(wordProbablityMap, nextWord);
