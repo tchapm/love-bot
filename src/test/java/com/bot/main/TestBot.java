@@ -15,7 +15,7 @@ public class TestBot {
 	public void testPublishResponseDate() throws InterruptedException{
 		Response testRes = new Response("Test");
 		testRes.setDate(new Date());
-		testRes.setResponse("Eldrich horrors!");
+		testRes.setResponse("Where?");
 		Bot lb = new Bot(botName);
 		ArrayList<Response> lbList = new ArrayList<Response>();
 		lbList.add(testRes);
@@ -35,8 +35,8 @@ public class TestBot {
 	public void testInputCorpus() throws IOException{
 		Bot lb = new Bot(botName);
 		Corpus cp = new Corpus(botName);
-		HashMap<String, Integer> testMap = cp.wordMap.get("death");
-		Assert.assertEquals(2,(int)testMap.get("which"));
+		HashMap<String, Integer> testMap = cp.wordMap.get("when");
+		Assert.assertEquals(true,(int)testMap.get("you")>0);
 		String tweet = lb.getTweet(cp.wordProbablityMap, "Steve", "which!");
 		Assert.assertEquals(true, tweet.length()>0);
 		Assert.assertEquals(true, tweet.startsWith("@Steve which"));
